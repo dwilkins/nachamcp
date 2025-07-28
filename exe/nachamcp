@@ -1,3 +1,56 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require "nachamcp"
+require "fast_mcp_annotations"
+require "nacha"
+require 'nacha/formatter'
+require "openssl"
+
+# Create an MCP server
+server = FastMcp::Server.new(name: "nacha-ach-parser", version: Nachamcp::VERSION)
+
+# Define a tool by inheriting from FastMcp::Tool
+class AchParserTool < FastMcp::Tool
+  tool_name "ach-parser"
+  description "Parse ACH records into json or markdown"
+  tags %w[ach parser json markdown banking]
+
+  arguments do
+    required(:ach_text).filled(:string).description("ACH records to parse")
+  end
+
+  annotations(
+    title: "ACH Record Parser", # Human-readable title for the tool
+    read_only_hint: true,
+    destructive_hint: false,
+    idempotent_hint: true,
+    open_world_hint: false
+  )
+
+  def call(ach_text:)
+    ach_records = Nacha.parse(ach_text)
+    raise "No ACH records found in the provided text." if ach_records.empty?
+
+    # Convert records to JSON format
+    json_output = ach_records.map(&:to_h).to_json
+    # formatter_options = {
+    #   file_size: ach_text.bytesize,
+    #   number_of_lines: ach_records.size,
+    #   created_at: Time.now,
+    #   modified_at: Time.now,
+    #   checksum: Digest::SHA256.hexdigest(ach_text),
+    # }
+    # json_output = Nacha::Formatter::FormatterFactory.get(:markdown, ach_records, formatter_options).format
+
+    { result: json_output }
+  rescue StandardError => e
+    { error: e.message }
+  end
+end
+# Register the tool with the server
+server.register_tool(AchParserTool)
+
+# Start the server
+server.start
