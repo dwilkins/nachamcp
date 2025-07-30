@@ -19,6 +19,8 @@ class AchParserTool < FastMcp::Tool
 
   arguments do
     required(:ach_text).filled(:string).description("ACH records to parse")
+    optional(:output_format).filled(:string).description("Output format for the parsed records, " \
+                                                         "can be \"json\" or \"markdown\" (default: json)")
   end
 
   annotations(
@@ -29,22 +31,31 @@ class AchParserTool < FastMcp::Tool
     open_world_hint: false
   )
 
-  def call(ach_text:)
+  def call(ach_text:, output_format: "json")
     ach_records = Nacha.parse(ach_text)
     raise "No ACH records found in the provided text." if ach_records.empty?
 
-    # Convert records to JSON format
-    json_output = ach_records.map(&:to_h).to_json
-    # formatter_options = {
-    #   file_size: ach_text.bytesize,
-    #   number_of_lines: ach_records.size,
-    #   created_at: Time.now,
-    #   modified_at: Time.now,
-    #   checksum: Digest::SHA256.hexdigest(ach_text),
-    # }
-    # json_output = Nacha::Formatter::FormatterFactory.get(:markdown, ach_records, formatter_options).format
+    case output_format.downcase
+    when "markdown", "json"
+      # Use the Markdown formatter to convert records to markdown format
+      output_format = output_format.downcase.to_sym
+    else
+      output_format = :json
+    end
 
-    { result: json_output }
+    # Convert records to output format
+    # json_output = ach_records.map(&:to_h).to_json
+    formatter_options = {
+      file_size: ach_text.bytesize,
+      number_of_lines: ach_records.size,
+      created_at: Time.now,
+      modified_at: Time.now,
+      checksum: Digest::SHA256.hexdigest(ach_text),
+    }
+    output = Nacha::Formatter::FormatterFactory.get(output_format,
+                                                         ach_records,
+                                                         formatter_options).format
+    output
   rescue StandardError => e
     { error: e.message }
   end
