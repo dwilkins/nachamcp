@@ -1,28 +1,74 @@
 # Nachamcp
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/nachamcp`. To experiment with that code, run `bin/console` for an interactive prompt.
+NachaMCP is an MCP Server to allow LLMs to reason about ACH records.  NachaMCP will
+parse ach records into JSON or Markdown, as requested by the LLM.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
-Install the gem and add to the application's Gemfile by executing:
 
 ```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+gem install nachamcp
 ```
-
-If bundler is not being used to manage dependencies, install the gem by executing:
-
-```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+To enable for Gemini CLI (`.gemini/settings.json`):
+```json
+{
+  "mcpServers": {
+    "nachamcp": {
+      "command": "nachamcp"
+    }
+  }
+}
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+Give me a detailed count of the record types in these ach records
+```
+101 02601507911223344552006011330A094101GS BANK USA            YOUR COMPANY NAME      REF123AB
+5220ALPHA COMPANY                       1234567890CCDPAYROLL   JUN 20200701   1026015070000001
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000001
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000002
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000003
+822000000300333366660000000000000000003000001234567890                         026015070000001
+5220ALPHA COMPANY                       1234567890PPDPAYROLL   JUN 20200701   1026015070000002
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000011
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000012
+822000000200222244440000000000000000002000001234567890                         026015070000002
+5220ALPHA COMPANY                       1234567890PPDPAYROLL   JUN 20200701   1026015070000003
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000101
+632111122223123456789        0000100000AB156325       JACK SMITH              0026015070000102
+822000000200222244440000000000000000002000001234567890                         026015070000003
+9000003000002000000070077785554000000000000000000700000
+```
+
+### Without NachaMCP:
+```
+Of course. Here is a detailed breakdown of the record types in the data you provided:
+
+  ┌──────────────────┬──────────────────┬───────┐
+  │ Record Type Code │ Record Type Name │ Count │
+  ├──────────────────┼──────────────────┼───────┤
+  │ 101              │ File Header      │ 1     │
+  │ 5220             │ Batch Header     │ 3     │
+  │ 632              │ Entry Detail     │ 6     │
+  │ 8220             │ Batch Control    │ 3     │
+  │ 900              │ File Control     │ 1     │
+  │ Total            │                  │ 14    │
+  └──────────────────┴──────────────────┴───────┘
+```
+
+### With NachaMcp
+
+```
+ Of course. Here is a detailed count of the record types in the ACH records you provided:
+
+   * file_header: 1
+   * batch_header: 3
+   * ccd_entry_detail: 3
+   * ppd_entry_detail: 4
+   * batch_control: 3
+   * file_control: 1
+```
 
 ## Development
 
