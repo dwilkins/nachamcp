@@ -52,10 +52,17 @@ class AchParserTool < FastMcp::Tool
   end
 
   def call(ach_text:, output_format: "json")
-    ach_records = Nacha.parse(ach_text)
+    ach_file = Nacha.parse(ach_text)
     format = output_formatter(output_format)
-    # Convert records to output format
-    Nacha::Formatter::FormatterFactory.get(format, ach_records, formatter_options(ach_text, ach_records)).format
+
+    case format
+    when :json
+      ach_file.to_json
+    when :markdown
+      ach_file.to_markdown
+    else
+      raise ArgumentError, "Unsupported output format: #{format}"
+    end
   rescue StandardError
     { error: "No ACH records found in the provided text." }.to_json
   end
